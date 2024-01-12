@@ -61,9 +61,6 @@ def filter_far_from_neighbors(df, constant_r_ratio, tolerance):
         M_value = filtered_df.loc[index, 'M']/M_max
 
         if index > filtered_df.index[0] and index < filtered_df.index[-1]:
-            print("index - 1 =", index - 1)
-            print("index + 1 =", index + 1)
-            print(filtered_df)
             right_neighbor_rho = filtered_df.loc[index - 1, 'rho_c']/rho_max
             left_neighbor_rho = filtered_df.loc[index + 1, 'rho_c']/rho_max
             right_neighbor_M = filtered_df.loc[index - 1, 'M']/M_max

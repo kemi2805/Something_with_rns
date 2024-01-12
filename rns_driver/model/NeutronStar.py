@@ -93,7 +93,7 @@ class NeutronStar:
             cmd = cmd + ["-t", "kepler", "-e", str(self.rho_c), "-b", str(1e-4), "-p", str(2)]
         return cmd
     
-#This Class is used "collect" Stars from one ESO
+#This Class is used "collect" Stars from one EOS
 class NeutronStarEOSCollection:
     def __init__(self, eos: str):
         self.eos = eos
@@ -317,7 +317,7 @@ class NeutronStarEOSCollection:
             
             
 class NeutronStarEOSCatalog:
-    """This class should be useful for parallel processing. Splitting the eos to different processorss"""
+    """This class should be useful for parallel processing. Splitting the eos to different processors"""
     def __init__(self):
         self.eos_collections = {}  # Dictionary to hold NeutronStarEOSCollection objects
 
