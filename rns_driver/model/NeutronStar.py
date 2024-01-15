@@ -108,7 +108,7 @@ class NeutronStarEOSCollection:
         star_df = pd.DataFrame([star_dict])
 
         # Concatenate the new DataFrame with the existing one
-        self.df = pd.concat([self.df, star_df], ignore_index=True)
+        self.df = pd.concat([self.df, star_df], ignore_index=True, sort=False)
 
     def filter_by_mass(self, min_mass: float) -> pd.DataFrame:
         """Example method to filter stars by mass."""
@@ -285,9 +285,9 @@ class NeutronStarEOSCollection:
                 #    print("Let's see if this makes sense. I will have to check my angular momentum")
                 omega_kepler = star_check.Omega
                 filtered_df = self.df[self.df['r_ratio'] == previous_ratio]
-                print(filtered_df)
-                print("---------------------------------------------------")
-                print("filtered_df.loc[lenght_of_dataframe_previously-1].at['Omega']",filtered_df.loc[lenght_of_dataframe_previously-1].at['Omega'])
+                #print(filtered_df)
+                #print("---------------------------------------------------")
+                #print("filtered_df.loc[lenght_of_dataframe_previously-1].at['Omega']",filtered_df.loc[lenght_of_dataframe_previously-1].at['Omega'])
                 if filtered_df.loc[lenght_of_dataframe_previously-1].at['Omega'] > omega_kepler:
                     invalid_collection_counter += 1
                     stepsize_ratio = stepsize_ratio/2.0
@@ -357,7 +357,7 @@ class NeutronStarEOSCatalog:
         eos_collection.traverse_r_ratio(optimal_rho_c, 0.5)
         rho_c_values = eos_collection.df['rho_c'].tolist()
         M_values = eos_collection.df['M'].tolist()
-        print(eos_collection.df)
+        #print(eos_collection.df)
         return eos_collection 
 
     #def process_eos_directory(self, dir_path, max_workers=None):
