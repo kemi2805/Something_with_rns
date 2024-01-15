@@ -60,7 +60,6 @@ def main_parallel(eos_path):
             comm.Send(0, dest=0, tag=22)
 
 def main_parallel_function(eos_folder):
-    EosCatalog = NeutronStarEOSCatalog()
     eos_path=None
     eos_path_buffer = None
     first_run = True
@@ -78,6 +77,7 @@ def main_parallel_function(eos_folder):
     if size == 1:
         for eos in eos_path:
             # Call _process_single_eos with the EOS path
+            EosCatalog = NeutronStarEOSCatalog()
             EosCollection = EosCatalog._process_single_eos(eos)
             unique_ratio = EosCollection.df['r_ratio'].unique()
             rows_to_drop = []
@@ -95,6 +95,7 @@ def main_parallel_function(eos_folder):
     print("rank =", rank,"    EOSes =", eos_path)
     for eos in eos_path:
         print(rank, eos)
+        EosCatalog = NeutronStarEOSCatalog() # I had an error message, I think this will solve it
         EosCatalog = EosCatalog._process_single_eos(eos) # Generating all of the Stars and writing them onto a dataframe
         EosCatalog.df.reset_index(inplace=True) # Resetting potential index failures, because I want to be safe
         name = "/home/miler/codes/Something_with_rns/rns_driver/testEOS" + str(rank) + ".parquet"
@@ -114,7 +115,6 @@ def main_parallel_function(eos_folder):
         else:
             EosCatalog.df.to_parquet(name, index=False, engine="fastparquet", append=True) # I am using fastparquet and not pyarrow, because fastparquet allows to append files
         EosCatalog.df = None # Python does not have a garbage disposal system (to my knowledge), so i do the next best thing. But I think it gets redundant with the next step
-        EosCatalog = NeutronStarEOSCatalog() # I had an error message, I think this will solve it
     return 0
 
 
