@@ -94,6 +94,8 @@ def main_parallel_function(eos_folder):
     # else: not written out
     print("rank =", rank,"    EOSes =", eos_path)
     for eos in eos_path:
+        print("--------------------------------------------------------")
+        print("LOOOOOOOOK AAAATT MEEEEE")
         print(rank, eos)
         EosCatalog = NeutronStarEOSCatalog() # I had an error message, I think this will solve it
         EosCatalog = EosCatalog._process_single_eos(eos) # Generating all of the Stars and writing them onto a dataframe
