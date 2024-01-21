@@ -1,0 +1,11 @@
+##[pylyzer] failed /home/ken/Codes/Something_with_rns/rns_driver/model/filter.py 1705074995 8790
+.math = pyimport "math"
+
+.np = pyimport "numpy"
+
+.eos_filter: (df: Never, fix_value_dict: Iterable(Indexable(Obj, Never))) -> NoneType
+.filter_rho_c_far_from_neighbors: |R <: Float, R :> {1}, R: Type, R :> {1}|(df: Indexable(Obj, Never), constant_r_ratio: Obj, tolerance: R) -> Array!(Structural({.__sub__ = (self: Never, R) -> Never; .__gt__ = (self: Never, R) -> Bool; .__add__ = (self: Never, R) -> Never}), 3)
+.filter_far_from_neighbors: |R: Type, R :> {1}, R :> {1}|(df: Indexable(Obj, Never), constant_r_ratio: Obj, tolerance: R) -> Array!(Structural({.__sub__ = (self: Never, R) -> Never; .__gt__ = (self: Never, R) -> Bool; .__add__ = (self: Never, R) -> Never; .__lt__ = (self: Never, R) -> Bool}), 3)
+.filter_M_far_from_neighbors: |R: Type, R :> {1}, R :> {1}|(df: Indexable(Obj, Never), constant_r_ratio: Obj, tolerance: R) -> Array!(Structural({.__sub__ = (self: Never, R) -> Never; .__gt__ = (self: Never, R) -> Bool; .__add__ = (self: Never, R) -> Never; .__lt__ = (self: Never, R) -> Bool}), 3)
+.filter_below_non_rotating: (df: Str, tolerance: Obj, constant_r_ratio := Obj) -> NoneType
+.filter_far_from_right_neighbors: |R :> {1}, R :> {Type_v_global_596: Nat | (Type_v_global_596 == 1) or ((Type_v_global_596 >= 1) and (Type_v_global_596 != 1))}, R <: Structural({.__mul__ = (self: Never, R) -> R}), R <: Structural({.__mul__ = (self: Never, R) -> Obj}), R :> {1}, R: Type|(df: Indexable(Obj, Never), constant_r_ratio: Obj, tolerance: R) -> Array!(Structural({.__sub__ = (self: Never, R) -> Never; .__gt__ = (self: Never, R) -> Bool; .__add__ = (self: Never, R) -> Never; .__lt__ = (self: Never, R) -> Bool}), 3)

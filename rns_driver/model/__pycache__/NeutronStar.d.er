@@ -1,0 +1,74 @@
+##[pylyzer] failed /home/ken/Codes/Something_with_rns/rns_driver/model/NeutronStar.py 1705074995 16455
+.sys = pyimport "sys"
+
+
+.pd = pyimport "pandas"
+
+.___v_desugar_1 = pyimport "dataclasses"
+.dataclass: {dataclasses.DataClass}
+.asdict: Never
+.___v_desugar_2 = pyimport "utils"
+.rns_callback: Never
+.___v_desugar_3 = pyimport "model/equations"
+.custom_brent_polynomial: Never
+.___v_desugar_4 = pyimport "scipy/optimize"
+.minimize_scalar: Never
+.___v_desugar_5 = pyimport "matplotlib"
+.plt = pyimport "./pyplot"
+.np = pyimport "numpy"
+
+.os = pyimport "os"
+
+.___v_desugar_6 = pyimport "(...)"
+.ProcessPoolExecutor: Never
+.custom_columns: Array!({"R", "T/W", "r_e", "J", "Z_b", "M_0", "omega_c/Omega", "Z_p", "Z_f", "Omega", "r_ratio", "Omega_pa", "h_minus", "M", "h_plus", "Phi_2", "Omega+", "u_phi", "rho_c", "Omega_p", "I", "eos"}, 22)
+.rns_command: {"/home/miler/codes/Something_with_rns/source/rns.v1.1d/rns"}
+.NeutronStar: ClassType
+.NeutronStar.__call__: () -> .NeutronStar
+.NeutronStar.eos: Str
+.NeutronStar.rho_c: Float
+.NeutronStar.M: Int
+.NeutronStar.M_0: Int
+.NeutronStar.R: Int
+.NeutronStar.Omega: Int
+.NeutronStar.Omega_p: Int
+.NeutronStar.TW: Int
+.NeutronStar.J: Int
+.NeutronStar.I: Int
+.NeutronStar.Phi_2: Int
+.NeutronStar.h_plus: Float
+.NeutronStar.h_minus: Float
+.NeutronStar.Z_p: Int
+.NeutronStar.Z_b: Int
+.NeutronStar.Z_f: Int
+.NeutronStar.omega_c_over_Omega: Float
+.NeutronStar.r_e: Float
+.NeutronStar.r_ratio: Float
+.NeutronStar.Omega_pa: Int
+.NeutronStar.Omega_plus: Int
+.NeutronStar.u_phi: Float
+.NeutronStar.__post_init__: (self: Never) -> NoneType
+.NeutronStar.ComputeAttributes: Never
+.NeutronStar.is_valid: |T: Type, U: Type|(self: .NeutronStar) -> T or U
+.NeutronStar.SettingCMD: Never
+
+.NeutronStarEOSCollection: ClassType
+.NeutronStarEOSCollection.eos: Str
+.NeutronStarEOSCollection.df: Never
+.NeutronStarEOSCollection.__call__: (eos: Str, df: Obj) -> .NeutronStarEOSCollection
+.NeutronStarEOSCollection.add_star: (self: .NeutronStarEOSCollection, star: .NeutronStar) -> NoneType
+.NeutronStarEOSCollection.filter_by_mass: (self: .NeutronStarEOSCollection, min_mass: Float) -> pandas.core.frame.DataFrame!(_: Type, _: Type, _: Type)
+.NeutronStarEOSCollection.filter_by_central_density: |R <: Structural({.__lt__ = (self: Never, R) -> Bool; .__ge__ = (self: Never, R) -> Bool; .__gt__ = (self: Never, Obj) -> Bool}), R :> {0}, R :> {0}, R <: Structural({.__lt__ = (self: Never, R) -> Bool; .__ge__ = (self: Never, R) -> Bool; .__gt__ = (self: Never, R) -> Bool})|(self: .NeutronStarEOSCollection, min_rho := R, max_rho := R, last_entry := Bool) -> pandas.core.frame.DataFrame!(_: Type, _: Type, _: Type)
+.NeutronStarEOSCollection.delete_outside_bounds: |R <: Structural({.__lt__ = (self: Never, R) -> Bool; .__ge__ = (self: Never, R) -> Bool; .__gt__ = (self: Never, R) -> Bool}), R :> {0}, R <: Structural({.__lt__ = (self: Never, R) -> Bool; .__ge__ = (self: Never, R) -> Bool; .__gt__ = (self: Never, Obj) -> Bool}), R :> {0}|(self: .NeutronStarEOSCollection, min_rho := R, max_rho := R, last_entry := Bool) -> NoneType
+.NeutronStarEOSCollection.get_series: |O <: Structural({.__sub__ = (self: Never, R) -> Obj}), R <: Structural({.__div__ = (self: Never, R) -> Obj}), R :> Nat, O <: Structural({.__sub__ = (self: Never, R) -> O}), R <: Structural({.__div__ = (self: Never, R) -> R})|(self: .NeutronStarEOSCollection, rho_TOV: O, initial_stepsize: R, options: GenericDict) -> Never
+.NeutronStarEOSCollection.traverse_r_ratio: |Type_90 <: .NeutronStarEOSCollection, R <: Structural({.__div__ = (self: Never, R) -> Obj}), R :> Nat, O <: Structural({.__sub__ = (self: Never, R) -> O}), O <: Structural({.__sub__ = (self: Never, R) -> Obj}), R <: Nat, R <: Structural({.__div__ = (self: Never, R) -> R})|(self: Type_90, rho_TOV: O, initial_stepsize_ratio: R, initial_stepsize_rho_c := R) -> Type_90
+
+.NeutronStarEOSCatalog: ClassType
+.NeutronStarEOSCatalog.eos_collections: Never
+.NeutronStarEOSCatalog.__call__: (eos_collections: Obj) -> .NeutronStarEOSCatalog
+.NeutronStarEOSCatalog.add_eos_collection: (self: .NeutronStarEOSCatalog, eos_name: Obj, eos_collection: Obj) -> NoneType
+.NeutronStarEOSCatalog.get_eos_collection: (self: .NeutronStarEOSCatalog, eos_name: Obj) -> Never
+.NeutronStarEOSCatalog.list_all_eos: (self: .NeutronStarEOSCatalog) -> Array(Never, _: Nat)
+.NeutronStarEOSCatalog._process_single_eos: (self: .NeutronStarEOSCatalog, eos_path: Str) -> Never
+.NeutronStarEOSCatalog.transmute_eos_file_to_200: (self: .NeutronStarEOSCatalog, dir_path: Never) -> {0}
+
