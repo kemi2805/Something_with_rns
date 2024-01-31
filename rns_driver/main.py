@@ -2,7 +2,6 @@ from model.NeutronStar import *
 import sys
 import os
 from mpi4py import MPI
-import math
 from model.filter import *
 from scipy import stats
 
@@ -57,7 +56,8 @@ def main_parallel(eos_path):
             print(rows_to_drop)
             print(df)
             df = df.drop(rows_to_drop)
-            name = "hihihi" + str(rank) + ".csv"
+            name = "hihihi" + str(rank)
+            name = name + ".csv"
             EosCatalog.df.to_parquet(name, index=False, mode="a")
             EosCatalog.df = None
             # Send a message back to the master indicating completion
@@ -69,13 +69,14 @@ def main_parallel_function(eos_folder):
     eos_path_buffer = None
     first_run = True
     if rank == 0:
-        eos_file_path = [f for f in os.listdir(eos_folder) if f.endswith(".rns")]
+        eos_file_path = [f for f in os.listdir(
+            eos_folder) if f.endswith(".rns")]
         eos_path = [os.path.join(eos_folder, f) for f in eos_file_path]
 
         def split_list(lst, n):
             k, m = divmod(len(lst), n)
             return [
-                lst[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)] for i in range(n)
+                lst[i * k + min(i, m): (i + 1) * k + min(i + 1, m)] for i in range(n)
             ]
 
         eos_path = split_list(eos_path, size)
@@ -133,7 +134,8 @@ def main_parallel_function(eos_folder):
             rows_to_drop = rows_to_drop + (
                 filter_far_from_neighbors(EosCatalog.df, ratio, 1e15)
             )
-        EosCatalog.df = EosCatalog.df.drop(rows_to_drop)  # This filters out the stars
+        EosCatalog.df = EosCatalog.df.drop(
+            rows_to_drop)  # This filters out the stars
         # We reset again, because the filtered data is somehow larger
         EosCatalog.df.reset_index(inplace=True)
         name = (
