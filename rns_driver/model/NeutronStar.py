@@ -246,6 +246,8 @@ class NeutronStarEOSCollection:
             condition = rows_to_check["rho_c"] < min_rho
         elif max_rho >= 0:
             condition = rows_to_check["rho_c"] > max_rho
+        else:
+            condition = rows_to_check["rho_c"] > 0
 
         # Drop the rows based on the condition
         self.df.drop(rows_to_check[condition].index, inplace=True)

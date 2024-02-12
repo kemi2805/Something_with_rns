@@ -20,11 +20,9 @@ eos_folder = "/home/miler/codes/Something_with_rns/EOS/106"
 
 def main_parallel_function(eos_folder):
     eos_path = None
-    eos_path_buffer = None
     first_run = True
     if rank == 0:
-        eos_file_path = [f for f in os.listdir(
-            eos_folder) if f.endswith(".rns")]
+        eos_file_path = [f for f in os.listdir(eos_folder) if f.endswith(".rns")]
         eos_path = [os.path.join(eos_folder, f) for f in eos_file_path]
 
         def split_list(lst, n):
@@ -44,17 +42,17 @@ def main_parallel_function(eos_folder):
             # Call _process_single_eos with the EOS path
             EosCatalog = NeutronStarEOSCatalog()
             EosCollection = EosCatalog._process_single_eos(eos)
-            unique_ratio = EosCollection.df["r_ratio"].unique()
+            unique_ratio = EosCollection.df["r_ratio"].unique() # Hier ist alles durcheinander. Was hab ich mir gedacht?
             rows_to_drop = []
             for ratio in unique_ratio:
                 rows_to_drop = rows_to_drop + (
-                    filter_far_from_neighbors(df, ratio, 1e15)
+                    filter_far_from_neighbors(EosCollection.df, ratio, 1e15)
                 )
-            df = df.drop(rows_to_drop)
+            df = EosCollection.df.drop(rows_to_drop)
             df.reset_index(drop=True, inplace=True)
             name = "hihihi_only_one.csv"
-            EosCatalog.df.to_parquet(name, index=False, mode="a")
-            EosCatalog.df = None
+            EosCollection.df.to_parquet(name, index=False, mode="a")
+            EosCollection.df = pd.DataFrame()
             EosCatalog = NeutronStarEOSCatalog()
             break
         return 0
@@ -106,71 +104,9 @@ def main_parallel_function(eos_folder):
                 name, index=False, engine="fastparquet", append=True
             )
         # Python does not have a garbage disposal system (to my knowledge), so i do the next best thing. But I think it gets redundant with the next step
-        EosCatalog.df = None
+        EosCatalog.df = pd.DataFrame()
     return 0
 
 
 main_parallel_function(eos_folder)
 sys.exit()
-
-#
-# sys.exit()
-
-
-# if __name__ == '__main__':
-#    Test_dir = "/home/kenuni/Programs/rns/rns_driver2/Test"
-#    EosCatalog = NeutronStarEOSCatalog()
-#    EosCatalog.transmute_eos_file_to_200(Test_dir)
-#
-
-eos = eos_path[0]
-# Create a history list/ or rather simething else
-history = NeutronStarEOSCollection(eos=eos)
-
-# Define bounds for rho_c
-a, b = 5e14, 8e15
-
-
-def objective_function(rho_c, history, eos):
-    ns = NeutronStar(eos=eos, rho_c=rho_c, J=0)
-    M = ns.M
-    print("eos =", eos)
-    print("rho_c", ns.rho_c)
-    # print(rho_c,M)
-    history.add_star(ns)
-    return -M  # We're returning negative M because we want to maximize M
-
-
-# Use brent to maximize M
-result = minimize_scalar(
-    objective_function,
-    args=(history, eos),
-    bracket=(a, b),
-    method=custom_brent_polynomial,
-    options={"maxiter": 15},
-)
-# history = [his for his in history if (his[0]>= a and his[0]<= b)]
-optimal_rho_c = result.x
-print(result)
-print(f"Optimal rho_c for maximizing M is: {optimal_rho_c}")
-print("And the maximized M is:", history.df.iloc[-1]["M"])
-
-# Sort the DataFrame based on the 'rho_c' column
-# sorted_history = history.df.sort_values(by='rho_c')
-
-# Extract the 'rho_c' and 'M' values
-# rho_c_values = sorted_history['rho_c'].tolist()
-# M_values = sorted_history['M'].tolist()
-
-Star_series = NeutronStarEOSCollection(eos=eos)
-# Star_series.get_series(optimal_rho_c,1e13,{"J":0})
-Star_series.traverse_r_ratio(optimal_rho_c, 0.05, initial_stepsize_rho_c=1e12)
-
-rho_c_values = Star_series.df["rho_c"].tolist()
-M_values = Star_series.df["M"].tolist()
-print(Star_series.df)
-Star_series.df.to_csv("Hilbert.csv")
-
-# Plotting
-plt.scatter(rho_c_values, M_values, s=10)
-plt.show()
