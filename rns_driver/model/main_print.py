@@ -27,6 +27,7 @@ colormap = []
 for i in range(len(unique_z)):
     colormap.append((i)/len(unique_z))
 colors = plt.cm.Blues(colormap)
+#cmap=mpl.colormaps[name] I can use this
 
 # Create a scatter plot for each distinct curve based on 'z' value
 for z_value, color in zip(unique_z, colors):
