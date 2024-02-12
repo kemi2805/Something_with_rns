@@ -18,52 +18,6 @@ eos_folder = "/home/miler/codes/Something_with_rns/EOS/106"
 # eos_path = [os.path.join(eos_folder,f) for f in eos_file_path]
 
 
-def main_parallel(eos_path):
-    EosCatalog = NeutronStarEOSCatalog()
-    print(rank)
-    if rank == 0:  # Master process
-        # Distribute EOS paths among worker processes
-        print("TEST")
-        for i, eos_path in enumerate(eos_path):
-            print("i =", i)
-            print("eos_path =", eos_path)
-            if i % (size - 1) == 0:
-                continue  # Skip paths that belong to worker processes
-            dest = 1 + (i % (size - 1))  # Distribute paths to worker processes
-            print("preprocess")
-            comm.Send(eos_path, dest=dest, tag=11)
-            print("BAHAHHA")
-
-        # Wait for worker processes to finish
-        for worker_rank in range(1, size):
-            comm.Recv(source=worker_rank, tag=22)
-        print("Master process has finished processing EOS files.")
-    else:  # Worker processes
-        while True:
-            print("TEST2")
-            eos_path = comm.Recv(source=0, tag=11)
-            print("Eyo")
-            if eos_path is None:
-                break  # No more work to do
-            # Call _process_single_eos with the EOS path
-            EosCatalog = EosCatalog._process_single_eos(eos_path)
-            unique_ratio = df["r_ratio"].unique()
-            rows_to_drop = []
-            for ratio in unique_ratio:
-                rows_to_drop = rows_to_drop + (
-                    filter_far_from_neighbors(df, ratio, 1e15)
-                )
-            print(rows_to_drop)
-            print(df)
-            df = df.drop(rows_to_drop)
-            name = "hihihi" + str(rank)
-            name = name + ".csv"
-            EosCatalog.df.to_parquet(name, index=False, mode="a")
-            EosCatalog.df = None
-            # Send a message back to the master indicating completion
-            comm.Send(0, dest=0, tag=22)
-
-
 def main_parallel_function(eos_folder):
     eos_path = None
     eos_path_buffer = None

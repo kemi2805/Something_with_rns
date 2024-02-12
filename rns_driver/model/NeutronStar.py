@@ -169,10 +169,12 @@ class NeutronStar:
 
 # This Class is used "collect" Stars from one EOS
 class NeutronStarEOSCollection:
+    eos : str = ""
+    # Initialize an empty DataFrame with the columns we want.
+    df = pd.DataFrame(columns=custom_columns)
+    
     def __init__(self, eos: str):
         self.eos = eos
-        # Initialize an empty DataFrame with the columns we want.
-        self.df = pd.DataFrame(columns=custom_columns)
 
     def add_star(self, star: NeutronStar):
         # Convert the NeutronStar dataclass to a dictionary
@@ -252,8 +254,8 @@ class NeutronStarEOSCollection:
         """Return a series of values based on the given options."""
 
         rho_c = rho_TOV
-        previous_rho_c = None
-        previous_M = None
+        previous_rho_c = 0
+        previous_M = 0
 
         # Counter for consecutive invalid stars
         invalid_star_counter = 0
@@ -405,9 +407,10 @@ class NeutronStarEOSCollection:
 
 class NeutronStarEOSCatalog:
     """This class should be useful for parallel processing. Splitting the eos to different processors"""
+    eos_collections = {}  # Dictionary to hold NeutronStarEOSCollection objects
 
     def __init__(self):
-        self.eos_collections = {}  # Dictionary to hold NeutronStarEOSCollection objects
+        return        
 
     def add_eos_collection(self, eos_name, eos_collection):
         """Add a NeutronStarEOSCollection for a specific EOS."""
