@@ -43,7 +43,7 @@ rns_command = "/home/miler/codes/Something_with_rns/source/rns.v1.1d/rns"
 
 @dataclass
 class NeutronStar:
-    eos: str = None
+    eos: str = "None"
     rho_c: float = -1
     M: float = -1
     M_0: float = -1
@@ -73,7 +73,7 @@ class NeutronStar:
 
     def ComputeAttributes(self):
         # First we have to check what Values we we given
-        if self.eos == None:
+        if self.eos == "None":
             print("You have to give me an eos")
             return None
         if self.rho_c < 0:

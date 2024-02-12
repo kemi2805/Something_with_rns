@@ -1,7 +1,7 @@
 from NeutronStar import *
-from mpi4py import MPI
 from scipy import stats
 from filter import *
+import matplotlib.pyplot as plt
 
 #test if everything is being added
 #Plotting
