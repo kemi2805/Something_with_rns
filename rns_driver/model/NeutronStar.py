@@ -184,7 +184,16 @@ class NeutronStarEOSCollection:
         star_df = pd.DataFrame([star_dict])
 
         # Concatenate the new DataFrame with the existing one
-        self.df = pd.concat([self.df, star_df], ignore_index=True, sort=False)
+        # But first checks if they are empty
+        # But does not really matter because EOSCollection is stupid
+        if not (star_df.empty and self.df.empty):
+            self.df = pd.concat([self.df, star_df], ignore_index=True, sort=False)
+        elif not star_df.empty and self.df.empty:
+            self.df = star_df
+        elif star_df.empty and not self.df.empty:
+            self.df = self.df
+        else:
+            self.df = self.df
 
     def filter_by_mass(self, min_mass: float) -> pd.DataFrame:
         """Example method to filter stars by mass."""
