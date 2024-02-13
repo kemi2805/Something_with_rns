@@ -74,6 +74,8 @@ def main_parallel_function(eos_folder):
         )
         if first_run:
             EosCollection.df.to_parquet(name, index=False, engine="fastparquet")
+            # Auskommentieren wenn die Zeit kommt
+            #first_run = False
         else:
             EosCollection.df.to_parquet(
                 name, index=False, engine="fastparquet", append=True
@@ -97,6 +99,7 @@ def main_parallel_function(eos_folder):
         if first_run:
             # I had to write it like that, because the append method lates does not generate a new file
             EosCollection.df.to_parquet(name, index=False, engine="fastparquet")
+            first_run = False
         else:
             # I am using fastparquet and not pyarrow, because fastparquet allows to append files
             EosCollection.df.to_parquet(
