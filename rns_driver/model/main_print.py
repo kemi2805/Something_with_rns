@@ -23,10 +23,21 @@ rows_to_drop = []
 #df = df.drop(rows_to_drop)
 #df.reset_index(drop=True, inplace=True)
 
-colormap = []
-for i in range(len(unique_z)):
-    colormap.append((i)/len(unique_z))
-colors = plt.cm.Blues(colormap)
+
+# Generate colormap
+num_unique_z = len(unique_z)
+colormap = [i / num_unique_z for i in range(num_unique_z)]
+
+# Get Blues colormap
+blues_cmap = plt.get_cmap('Blues')
+
+# Map colormap to colors
+colors = [blues_cmap(col) for col in colormap]
+
+#colormap = []
+#for i in range(len(unique_z)):
+#    colormap.append((i)/len(unique_z))
+#colors = plt.cm.Blues(colormap)
 #cmap=mpl.colormaps[name] I can use this
 
 # Create a scatter plot for each distinct curve based on 'z' value

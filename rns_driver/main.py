@@ -35,7 +35,7 @@ def main_parallel_function(eos_folder):
         #eos_path = np.array(eos_path, dtype=object)
 
     eos_path = comm.scatter(sendobj=eos_path, root=0)
-    print("I am rank:", rank, ". And i have the following eoses:",eos_path)
+    print("I am rank:", rank, "./ And i have the following eoses:",eos_path,"\n")
     if eos_path is None:
         return 0  # No more work to do
     if size == 1:
