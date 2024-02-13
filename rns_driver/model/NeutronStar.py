@@ -458,8 +458,8 @@ class NeutronStarEOSCatalog:
         print("The central energy density at TOV is", optimal_rho_c)
         eos_collection = NeutronStarEOSCollection(eos_path)
         eos_collection.traverse_r_ratio(optimal_rho_c, 0.5)
-        rho_c_values = eos_collection.df["rho_c"].tolist()
-        M_values = eos_collection.df["M"].tolist()
+        #rho_c_values = eos_collection.df["rho_c"].tolist()
+        #M_values = eos_collection.df["M"].tolist()
         # print(eos_collection.df)
         return eos_collection
 

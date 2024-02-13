@@ -19,7 +19,7 @@ eos_folder = "/home/miler/codes/Something_with_rns/EOS/106"
 
 
 def main_parallel_function(eos_folder):
-    eos_path = None
+    eos_path = []
     first_run = True
     if rank == 0:
         eos_file_path = [f for f in os.listdir(eos_folder) if f.endswith(".rns")]
@@ -32,9 +32,10 @@ def main_parallel_function(eos_folder):
             ]
 
         eos_path = split_list(eos_path, size)
-        eos_path = np.array(eos_path, dtype=object)
+        #eos_path = np.array(eos_path, dtype=object)
 
     eos_path = comm.scatter(sendobj=eos_path, root=0)
+    print("I am rank:", rank, ". And i have the following eoses:",eos_path)
     if eos_path is None:
         return 0  # No more work to do
     if size == 1:
@@ -54,7 +55,6 @@ def main_parallel_function(eos_folder):
             EosCollection.df.to_parquet(name, index=False, mode="a")
             EosCollection.df = pd.DataFrame()
             EosCatalog = NeutronStarEOSCatalog()
-            break
         return 0
     # else: not written out
     print("rank =", rank, "    EOSes =", eos_path)
@@ -62,34 +62,33 @@ def main_parallel_function(eos_folder):
         print("--------------------------------------------------------")
         print("LOOOOOOOOK AAAATT MEEEEE")
         print(rank, eos)
-        # I had an error message, I think this will solve it
         EosCatalog = NeutronStarEOSCatalog()
         # Generating all of the Stars and writing them onto a dataframe
-        EosCatalog = EosCatalog._process_single_eos(eos)
+        EosCollection = EosCatalog._process_single_eos(eos)
         # Resetting potential index failures, because I want to be safe
-        EosCatalog.df.reset_index(inplace=True)
+        EosCollection.df.reset_index(inplace=True)
         name = (
             "/home/miler/codes/Something_with_rns/rns_driver/testEOS"
             + str(rank)
             + ".parquet"
         )
         if first_run:
-            EosCatalog.df.to_parquet(name, index=False, engine="fastparquet")
+            EosCollection.df.to_parquet(name, index=False, engine="fastparquet")
         else:
-            EosCatalog.df.to_parquet(
+            EosCollection.df.to_parquet(
                 name, index=False, engine="fastparquet", append=True
             )
-        unique_ratio = EosCatalog.df["r_ratio"].unique()
+        unique_ratio = EosCollection.df["r_ratio"].unique()
         rows_to_drop = []
         for ratio in unique_ratio:
             # This finds the obviously wrong calculated stars
             rows_to_drop = rows_to_drop + (
-                filter_far_from_neighbors(EosCatalog.df, ratio, 1e15)
+                filter_far_from_neighbors(EosCollection.df, ratio, 1e15)
             )
-        EosCatalog.df = EosCatalog.df.drop(
+        EosCollection.df = EosCollection.df.drop(
             rows_to_drop)  # This filters out the stars
         # We reset again, because the filtered data is somehow larger
-        EosCatalog.df.reset_index(inplace=True)
+        EosCollection.df.reset_index(inplace=True)
         name = (
             "/home/miler/codes/Something_with_rns/rns_driver/testEOSfiltered"
             + str(rank)
@@ -97,14 +96,14 @@ def main_parallel_function(eos_folder):
         )
         if first_run:
             # I had to write it like that, because the append method lates does not generate a new file
-            EosCatalog.df.to_parquet(name, index=False, engine="fastparquet")
+            EosCollection.df.to_parquet(name, index=False, engine="fastparquet")
         else:
             # I am using fastparquet and not pyarrow, because fastparquet allows to append files
-            EosCatalog.df.to_parquet(
+            EosCollection.df.to_parquet(
                 name, index=False, engine="fastparquet", append=True
             )
         # Python does not have a garbage disposal system (to my knowledge), so i do the next best thing. But I think it gets redundant with the next step
-        EosCatalog.df = pd.DataFrame()
+        EosCollection.df = pd.DataFrame()
     return 0
 
 
