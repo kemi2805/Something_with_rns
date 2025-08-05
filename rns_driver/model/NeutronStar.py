@@ -10,7 +10,7 @@ import numpy as np
 
 import os
 
-sys.path.append("/home/miler/codes/Something_with_rns/rns_driver")
+sys.path.append("/mnt/rafast/miler/codes/Something_with_rns/rns_driver")
 
 
 custom_columns = [
@@ -38,7 +38,7 @@ custom_columns = [
     "u_phi",
 ]
 
-rns_command = "/home/miler/codes/Something_with_rns/source/rns.v1.1d/rns"
+rns_command = "/mnt/rafast/miler/codes/Something_with_rns/source/rns.v1.1d/rns"
 
 
 @dataclass

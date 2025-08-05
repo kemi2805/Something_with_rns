@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 #Plotting
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
-df = pd.read_parquet('/home/miler/codes/Something_with_rns/rns_driver/testEOS10.parquet')
-df_append = pd.read_parquet('/home/miler/codes/Something_with_rns/rns_driver/testEOS24.parquet')
-df.to_parquet('/home/miler/codes/Something_with_rns/rns_driver/test_append.parquet', engine="fastparquet")
-df_append.to_parquet('/home/miler/codes/Something_with_rns/rns_driver/test_append.parquet', engine="fastparquet", append=True)
+df = pd.read_parquet('/mnt/rafast/miler/codes/Something_with_rns/rns_driver/testEOS10.parquet')
+df_append = pd.read_parquet('/mnt/rafast/miler/codes/Something_with_rns/rns_driver/testEOS24.parquet')
+df.to_parquet('/mnt/rafast/miler/codes/Something_with_rns/rns_driver/test_append.parquet', engine="fastparquet")
+df_append.to_parquet('/mnt/rafast/miler/codes/Something_with_rns/rns_driver/test_append.parquet', engine="fastparquet", append=True)
 
 #df.to_parquet('/home/miler/codes/Something_with_rns/rns_driver/Hihi(copy).parquet', engine="pyarrow")
 print("Omega =", df["Omega"].unique())

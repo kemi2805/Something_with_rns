@@ -11,7 +11,7 @@ size = comm.Get_size()
 
 
 # Define an eos
-eos_folder = "/home/miler/codes/Something_with_rns/EOS/106"
+eos_folder = "/mnt/rafast/miler/codes/Something_with_rns/EOS/106"
 # eos_folder = "/run/user/1001/gvfs/sftp:host=itp.uni-frankfurt.de,user
 # =miler/home/miler/codes/Something_with_rns/test_eos_folder"
 # eos_file_path = [f for f in os.listdir( eos_folder) if f.endswith('.rns')]
@@ -68,7 +68,7 @@ def main_parallel_function(eos_folder):
         # Resetting potential index failures, because I want to be safe
         EosCollection.df.reset_index(inplace=True)
         name = (
-            "/home/miler/codes/Something_with_rns/rns_driver/testEOS"
+            "/mnt/rafast/miler/codes/Something_with_rns/rns_driver/testEOS"
             + str(rank)
             + ".parquet"
         )
@@ -92,7 +92,7 @@ def main_parallel_function(eos_folder):
         # We reset again, because the filtered data is somehow larger
         EosCollection.df.reset_index(inplace=True)
         name = (
-            "/home/miler/codes/Something_with_rns/rns_driver/testEOSfiltered"
+            "/mnt/rafast/codes/Something_with_rns/rns_driver/testEOSfiltered"
             + str(rank)
             + ".parquet"
         )
