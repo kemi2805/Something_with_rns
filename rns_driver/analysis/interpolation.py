@@ -1,7 +1,7 @@
 # rns_driver/analysis/interpolation.py
 import numpy as np
 from scipy.interpolate import RBFInterpolator, griddata
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 import pandas as pd
 
 
