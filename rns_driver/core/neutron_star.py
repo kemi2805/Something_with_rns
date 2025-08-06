@@ -1,7 +1,7 @@
 # rns_driver/core/neutron_star.py
 from dataclasses import dataclass, field, asdict
 from typing import Optional, Dict, Any, List
-import numpy as np
+import numpy as np # type: ignore
 from pathlib import Path
 
 
@@ -48,14 +48,27 @@ class NeutronStar:
     
     @property
     def is_valid(self) -> bool:
-        """Check if the neutron star model is physically valid."""
-        return (
-            self.R > 0 and 
-            self.M > 0 and 
-            self.M < 5.0 and  # Reasonable upper limit for NS mass
-            self.r_ratio <= 1.0 and
-            self.r_ratio > 0
-        )
+        """
+        Check if the neutron star model is physically valid.
+        Accept -1 as "undefined" rather than invalid.
+        """
+        # Essential parameters that must be positive (not -1)
+        if self.M <= 0 or self.R <= 0:
+            return False
+        
+        # Reasonable physical bounds
+        if self.M > 5.0:  # Unreasonably high mass
+            return False
+        
+        if self.R > 50.0:  # Unreasonably large radius
+            return False
+        
+        # For rotating stars, check r_ratio if it's defined
+        if self.is_rotating and self.r_ratio > 0:
+            if self.r_ratio > 1.0:
+                return False
+        
+        return True
     
     @property
     def is_rotating(self) -> bool:

@@ -22,14 +22,16 @@ class DataWriter:
         df.to_parquet(filepath, compression=compression, index=False)
         self.logger.info(f"Wrote {len(df)} rows to {filepath}")
     
-    def write_hdf5(self,
-                  df: pd.DataFrame,
-                  filepath: Path,
-                  key: str = 'neutron_stars') -> None:
+    def write_hdf5(self, df: pd.DataFrame, filepath: Path, key: str = 'neutron_stars') -> None:
         """Write DataFrame to HDF5 file."""
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-        df.to_hdf(filepath, key=key, mode='w', complevel=9)
-        self.logger.info(f"Wrote {len(df)} rows to {filepath} (key={key})")
+        try:
+            filepath.parent.mkdir(parents=True, exist_ok=True)
+            df.to_hdf(filepath, key=key, mode='w', complevel=9)
+            self.logger.info(f"Wrote {len(df)} rows to {filepath} (key={key})")
+        except ImportError as e:
+            self.logger.warning(f"Cannot write HDF5: {e}. Install 'tables' package.")
+        except Exception as e:
+            self.logger.error(f"Failed to write HDF5: {e}")
     
     def write_csv(self,
                  df: pd.DataFrame,

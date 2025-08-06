@@ -1,8 +1,8 @@
 # rns_driver/core/eos_catalog.py
 from typing import List, Dict, Optional
 from pathlib import Path
-import pandas as pd
-import numpy as np
+import pandas as pd # pyright: ignore[reportMissingModuleSource]
+import numpy as np # pyright: ignore[reportMissingImports]
 import logging
 
 from .eos_collection import EOSCollection
@@ -92,7 +92,7 @@ class EOSCatalog:
             rho_tov,
             self.solver,
             eos_path,
-            initial_r_ratio_step=0.01
+            initial_r_ratio_step=0.01,
         )
         
         return collection

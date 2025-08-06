@@ -25,26 +25,26 @@ class ParallelExecutor:
             self.n_workers = min(config.max_workers, mp.cpu_count())
     
     def process_eos_files(self, 
-                         eos_files: List[Path],
-                         processor: Callable[[Path], pd.DataFrame],
-                         output_dir: Optional[Path] = None) -> pd.DataFrame:
+                     eos_args: List[Any],  # Changed from eos_files
+                     processor: Callable[[Any], pd.DataFrame],
+                     output_dir: Optional[Path] = None) -> pd.DataFrame:
         """
         Process multiple EOS files in parallel.
-        
+
         Args:
-            eos_files: List of EOS file paths
-            processor: Function that processes a single EOS file
+            eos_args: List of arguments for the processor function
+            processor: Function that processes a single set of arguments
             output_dir: Optional directory to save intermediate results
-        
+
         Returns:
             Combined DataFrame with all results
         """
         if output_dir:
             output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Split work among processes
-        chunks = self._split_work(eos_files, self.n_workers)
-        
+        chunks = self._split_work(eos_args, self.n_workers)
+
         results = []
         with ProcessPoolExecutor(max_workers=self.n_workers) as executor:
             # Submit all tasks
@@ -52,25 +52,25 @@ class ParallelExecutor:
                 executor.submit(self._process_chunk, chunk, processor, output_dir): i
                 for i, chunk in enumerate(chunks)
             }
-            
+
             # Collect results with progress bar
-            with tqdm(total=len(eos_files), desc="Processing EOS files") as pbar:
+            with tqdm(total=len(eos_args), desc="Processing EOS files") as pbar:
                 for future in as_completed(future_to_chunk):
                     chunk_id = future_to_chunk[future]
                     try:
                         chunk_result = future.result()
                         results.append(chunk_result)
                         pbar.update(len(chunks[chunk_id]))
-                        
+
                         # Save intermediate result if requested
                         if output_dir and not chunk_result.empty:
                             chunk_path = output_dir / f"chunk_{chunk_id}.parquet"
                             chunk_result.to_parquet(chunk_path, engine='pyarrow')
-                            
+
                     except Exception as e:
                         self.logger.error(f"Chunk {chunk_id} failed: {e}")
                         pbar.update(len(chunks[chunk_id]))
-        
+
         # Combine all results
         if results:
             combined_df = pd.concat(results, ignore_index=True)
@@ -78,21 +78,23 @@ class ParallelExecutor:
             return combined_df
         else:
             return pd.DataFrame()
-    
+
     def _process_chunk(self, 
-                      eos_files: List[Path],
-                      processor: Callable[[Path], pd.DataFrame],
+                      eos_args: List[Any],  # Changed from eos_files
+                      processor: Callable[[Any], pd.DataFrame],
                       output_dir: Optional[Path] = None) -> pd.DataFrame:
-        """Process a chunk of EOS files."""
+        """Process a chunk of EOS arguments."""
         chunk_results = []
         
-        for eos_file in eos_files:
+        for args in eos_args:  # Changed from eos_file
             try:
-                result = processor(eos_file)
+                result = processor(args)  # Pass args instead of eos_file
                 if not result.empty:
                     chunk_results.append(result)
             except Exception as e:
-                self.logger.error(f"Failed to process {eos_file}: {e}")
+                # Extract eos path for error logging
+                eos_path = args[0] if isinstance(args, tuple) else args
+                self.logger.error(f"Failed to process {eos_path}: {e}")
         
         if chunk_results:
             return pd.concat(chunk_results, ignore_index=True)

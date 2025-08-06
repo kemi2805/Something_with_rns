@@ -53,7 +53,7 @@ class RNSSolver:
                 text=True,
                 timeout=self.config.timeout
             )
-            
+
             if result.returncode != 0:
                 self.logger.error(f"RNS failed with code {result.returncode}: {result.stderr}")
                 return None
@@ -109,7 +109,7 @@ class RNSSolver:
         return cmd
     
     def _parse_output(self, output: str, eos_path: Path, rho_c: float) -> Optional[NeutronStar]:
-        """Parse RNS output into NeutronStar object."""
+        """Parse RNS output into NeutronStar object, handling --- values as -1."""
         lines = output.strip().split('\n')
         if not lines:
             return None
@@ -132,74 +132,77 @@ class RNSSolver:
             
             for val in raw_values:
                 val = val.strip()
-                if val == '---' or val == '-' or val == 'nan' or val == 'inf':
-                    # RNS couldn't compute this value
-                    self.logger.warning(f"RNS returned invalid value: '{val}' for {eos_path.name}")
-                    return None
-                try:
-                    float_val = float(val)
-                    if np.isnan(float_val) or np.isinf(float_val):
-                        self.logger.warning(f"Invalid numerical value: {float_val}")
-                        return None
-                    values.append(float_val)
-                except ValueError:
-                    self.logger.warning(f"Could not parse value: '{val}'")
-                    return None
+                if val == '---' or val == '-':
+                    # Replace undefined values with -1
+                    values.append(-1.0)
+                elif val in ['nan', 'inf', '-nan', '-inf']:
+                    # Replace problematic float values with -1
+                    values.append(-1.0)
+                else:
+                    try:
+                        float_val = float(val)
+                        if np.isnan(float_val) or np.isinf(float_val):
+                            values.append(-1.0)
+                        else:
+                            values.append(float_val)
+                    except ValueError:
+                        # If we can't parse it, use -1
+                        values.append(-1.0)
             
             if len(values) < 10:  # Need at least basic parameters
                 self.logger.warning(f"Too few valid values: {len(values)}")
                 return None
             
-            # Determine if static or rotating based on number of values and content
-            if len(values) >= 16 and abs(values[3]) < 1e-10:  # Omega ~ 0 means static
-                # Static star - reorder values appropriately
+            # Determine if static or rotating based on Omega value
+            # For your output format, Omega is at index 4
+            is_static = len(values) > 4 and abs(values[4]) < 1e-10
+            
+            if is_static:
+                # Static star - based on your output format
                 return NeutronStar(
                     eos=eos_path.stem,
                     rho_c=rho_c,
-                    M=values[0],           # Mass
-                    M_0=values[1],         # Rest mass  
-                    R=values[2],           # Radius
-                    Omega=0.0,             # Angular velocity (static)
-                    Omega_p=0.0,           # Keplerian frequency
-                    T_W=0.0,               # T/W ratio
-                    J=0.0,                 # Angular momentum
-                    I=0.0,                 # Moment of inertia
-                    Phi_2=values[8] if len(values) > 8 else 0.0,     # Quadrupole moment
-                    h_plus=values[9] if len(values) > 9 else 0.0,    # ISCO height +
-                    h_minus=values[10] if len(values) > 10 else 0.0, # ISCO height -
-                    Z_p=values[11] if len(values) > 11 else 0.0,     # Polar redshift
-                    Z_b=values[12] if len(values) > 12 else 0.0,     # Backward redshift
-                    Z_f=values[13] if len(values) > 13 else 0.0,     # Forward redshift
-                    omega_c_over_Omega=values[14] if len(values) > 14 else 0.0,
-                    r_e=values[15] if len(values) > 15 else values[2], # Coordinate radius
-                    r_ratio=1.0            # Static star
+                    M=values[1] if len(values) > 1 else -1.0,           # Mass
+                    M_0=values[2] if len(values) > 2 else -1.0,         # Rest mass  
+                    R=values[3] if len(values) > 3 else -1.0,           # Radius
+                    Omega=0.0,                                          # Angular velocity (static)
+                    Omega_p=values[5] if len(values) > 5 else -1.0,     # Keplerian frequency
+                    T_W=0.0,                                            # T/W ratio (static)
+                    J=0.0,                                              # Angular momentum (static)
+                    I=-1.0,                                             # Moment of inertia (undefined for static)
+                    Phi_2=values[8] if len(values) > 8 else -1.0,       # Quadrupole moment
+                    h_plus=values[9] if len(values) > 9 else -1.0,      # ISCO height +
+                    h_minus=values[10] if len(values) > 10 else -1.0,   # ISCO height -
+                    Z_p=values[11] if len(values) > 11 else -1.0,       # Polar redshift
+                    Z_b=values[12] if len(values) > 12 else -1.0,       # Backward redshift
+                    Z_f=values[13] if len(values) > 13 else -1.0,       # Forward redshift
+                    omega_c_over_Omega=values[14] if len(values) > 14 else -1.0,
+                    r_e=values[15] if len(values) > 15 else (values[3] if len(values) > 3 else -1.0),
+                    r_ratio=1.0                                         # Static star
                 )
                 
-            elif len(values) >= 16:  # Rotating star
+            else:  # Rotating star
                 return NeutronStar(
                     eos=eos_path.stem,
                     rho_c=rho_c,
-                    M=values[0],           # Mass
-                    M_0=values[1],         # Rest mass
-                    R=values[2],           # Radius
-                    Omega=values[3],       # Angular velocity
-                    Omega_p=values[4],     # Keplerian frequency
-                    T_W=values[5],         # T/W ratio
-                    J=values[6],           # Angular momentum
-                    I=values[7],           # Moment of inertia
-                    Phi_2=values[8],       # Quadrupole moment
-                    h_plus=values[9],      # ISCO height +
-                    h_minus=values[10],    # ISCO height -
-                    Z_p=values[11],        # Polar redshift
-                    Z_b=values[12],        # Backward redshift
-                    Z_f=values[13],        # Forward redshift
-                    omega_c_over_Omega=values[14],
-                    r_e=values[15],        # Coordinate radius
-                    r_ratio=values[16] if len(values) > 16 else 0.8  # Default rotating
+                    M=values[1] if len(values) > 1 else -1.0,           # Mass
+                    M_0=values[2] if len(values) > 2 else -1.0,         # Rest mass
+                    R=values[3] if len(values) > 3 else -1.0,           # Radius
+                    Omega=values[4] if len(values) > 4 else -1.0,       # Angular velocity
+                    Omega_p=values[5] if len(values) > 5 else -1.0,     # Keplerian frequency
+                    T_W=values[6] if len(values) > 6 else -1.0,         # T/W ratio
+                    J=values[7] if len(values) > 7 else -1.0,           # Angular momentum
+                    I=values[8] if len(values) > 8 else -1.0,           # Moment of inertia
+                    Phi_2=values[9] if len(values) > 9 else -1.0,       # Quadrupole moment
+                    h_plus=values[10] if len(values) > 10 else -1.0,    # ISCO height +
+                    h_minus=values[11] if len(values) > 11 else -1.0,   # ISCO height -
+                    Z_p=values[12] if len(values) > 12 else -1.0,       # Polar redshift
+                    Z_b=values[13] if len(values) > 13 else -1.0,       # Backward redshift
+                    Z_f=values[14] if len(values) > 14 else -1.0,       # Forward redshift
+                    omega_c_over_Omega=values[15] if len(values) > 15 else -1.0,
+                    r_e=values[16] if len(values) > 16 else -1.0,       # Coordinate radius
+                    r_ratio=values[17] if len(values) > 17 else 0.8     # Default rotating
                 )
-            else:
-                self.logger.error(f"Unexpected number of values: {len(values)}")
-                return None
                 
         except (ValueError, IndexError) as e:
             self.logger.error(f"Failed to parse RNS output: {e}")

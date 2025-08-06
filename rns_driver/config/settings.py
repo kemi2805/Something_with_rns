@@ -2,7 +2,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Any, Optional
-import yaml
+import yaml  # type: ignore
 import os
 
 
@@ -14,7 +14,7 @@ class RNSConfig:
     output_directory: Path = Path("./output")
     
     # Computation parameters
-    timeout: float = 10.0
+    timeout: float = 60.0
     tolerance: float = 1e-4
     accuracy: float = 1e-5
     relaxation_factor: float = 1.0

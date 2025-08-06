@@ -20,10 +20,12 @@ requirements = [
     "pandas>=1.4.0",
     "scipy>=1.7.0",
     "h5py>=3.6.0",
+    "tables>=3.7.0",
     "pyarrow>=7.0.0",
     "pyyaml>=6.0",
     "tqdm>=4.65.0",
     "matplotlib>=3.5.0",
+    "scikit-learn>=1.7.0",
 ]
 
 setup(

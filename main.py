@@ -11,9 +11,9 @@ import logging
 import sys
 from pathlib import Path
 from typing import Optional, List
-import pandas as pd
+import pandas as pd # type: ignore
 from datetime import datetime
-import yaml
+import yaml  # pyright: ignore[reportMissingModuleSource]
 
 # Import our modules
 from rns_driver.config.settings import RNSConfig
@@ -57,6 +57,20 @@ def setup_logging(config: RNSConfig) -> None:
     )
 
 
+def process_single_eos(eos_path_and_config):
+    """Process a single EOS file - pickleable function."""
+    eos_path, config, strategy_type = eos_path_and_config
+    
+    if strategy_type == 'adaptive':
+        from rns_driver.parallel.strategies import AdaptiveProcessingStrategy
+        strategy = AdaptiveProcessingStrategy()
+    else:
+        from rns_driver.parallel.strategies import StandardProcessingStrategy
+        strategy = StandardProcessingStrategy()
+    
+    return strategy.process(eos_path, config)
+
+
 def process_eos_files(config: RNSConfig, 
                      eos_files: Optional[List[Path]] = None,
                      use_parallel: bool = True,
@@ -85,24 +99,28 @@ def process_eos_files(config: RNSConfig,
     
     logger.info(f"Found {len(eos_files)} EOS files to process")
     
-    # Choose processing strategy
-    if strategy == 'adaptive':
-        processor_strategy = AdaptiveProcessingStrategy()
-    else:
-        processor_strategy = StandardProcessingStrategy()
-    
     # Process files
     if use_parallel and len(eos_files) > 1:
         logger.info(f"Using parallel processing with {config.max_workers} workers")
         
         executor = ParallelExecutor(config)
+        
+        # Prepare arguments for the pickleable function
+        eos_args = [(eos_path, config, strategy) for eos_path in eos_files]
+        
         results = executor.process_eos_files(
-            eos_files,
-            lambda eos: processor_strategy.process(eos, config),
+            eos_args,
+            process_single_eos,  # Use the top-level function
             output_dir=config.output_directory / "intermediate"
         )
     else:
         logger.info("Using sequential processing")
+        
+        # Choose processing strategy
+        if strategy == 'adaptive':
+            processor_strategy = AdaptiveProcessingStrategy()
+        else:
+            processor_strategy = StandardProcessingStrategy()
         
         catalog = EOSCatalog(config)
         all_results = []
