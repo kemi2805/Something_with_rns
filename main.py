@@ -74,7 +74,8 @@ def process_single_eos(eos_path_and_config):
 def process_eos_files(config: RNSConfig, 
                      eos_files: Optional[List[Path]] = None,
                      use_parallel: bool = True,
-                     strategy: str = 'standard') -> pd.DataFrame:
+                     strategy: str = 'standard',
+                     use_adaptive: bool = True) -> pd.DataFrame:
     """
     Process EOS files to generate neutron star models.
     
@@ -127,7 +128,7 @@ def process_eos_files(config: RNSConfig,
         
         for eos_file in eos_files:
             try:
-                collection = catalog._process_single_eos(eos_file)
+                collection = catalog._process_single_eos(eos_file, use_adaptive_step=use_adaptive)
                 if not collection.df.empty:
                     all_results.append(collection.df)
             except Exception as e:
@@ -345,6 +346,9 @@ Examples:
     parser.add_argument('--log-file', type=Path,
                        help='Log file path')
     
+    parser.add_argument('--no-adaptive', action='store_true',
+                   help='Disable adaptive stepping')
+    
     args = parser.parse_args()
     
     # Load or create configuration
@@ -366,6 +370,9 @@ Examples:
         config.log_level = args.log_level
     if args.log_file:
         config.log_file = args.log_file
+    if args.no_adaptive:
+        config.use_adaptive = not args.no_adaptive
+    use_adaptive = not args.no_adaptive
     
     # Setup logging
     setup_logging(config)
@@ -391,7 +398,8 @@ Examples:
             config,
             eos_files=eos_files,
             use_parallel=not args.no_parallel,
-            strategy=args.strategy
+            strategy=args.strategy,
+            use_adaptive=use_adaptive
         )
         
         if df.empty:

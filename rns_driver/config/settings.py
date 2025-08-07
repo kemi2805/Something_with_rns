@@ -30,6 +30,8 @@ class RNSConfig:
     # Logging
     log_level: str = "INFO"
     log_file: Optional[Path] = None
+
+    use_adaptive: bool = True  # Use adaptive step size in RNS solver
     
     @classmethod
     def from_yaml(cls, path: Path) -> 'RNSConfig':

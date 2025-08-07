@@ -26,7 +26,7 @@ class StandardProcessingStrategy(ProcessingStrategy):
         from ..core.eos_catalog import EOSCatalog
         
         catalog = EOSCatalog(config)
-        collection = catalog._process_single_eos(eos_path)
+        collection = catalog._process_single_eos(eos_path, use_adaptive_step=config.use_adaptive)
         
         return collection.df
 
@@ -69,7 +69,8 @@ class AdaptiveProcessingStrategy(ProcessingStrategy):
         collection.traverse_r_ratio(
             rho_tov, 
             r_ratio_step,
-            initial_stepsize_rho_c=1e13
+            initial_stepsize_rho_c=1e13,
+            use_adaptive_step=config.use_adaptive,
         )
         
         return collection.df

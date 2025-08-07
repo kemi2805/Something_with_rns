@@ -70,7 +70,7 @@ class EOSCatalog:
         else:
             return pd.DataFrame()
     
-    def _process_single_eos(self, eos_path: Path) -> EOSCollection:
+    def _process_single_eos(self, eos_path: Path, use_adaptive_step:bool = True) -> EOSCollection:
         """Process a single EOS file."""
         self.logger.info(f"Processing {eos_path.stem}")
         
@@ -93,6 +93,7 @@ class EOSCatalog:
             self.solver,
             eos_path,
             initial_r_ratio_step=0.01,
+            use_adaptive_step = use_adaptive_step
         )
         
         return collection
