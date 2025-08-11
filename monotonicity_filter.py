@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Monotonicity-Based Fragment Filter
-=================================
+Monotonicity-Based Fragment Filter (FIXED VERSION)
+=================================================
 
 Filter neutron star data by checking monotonicity along physical sequences:
-- Along constant r_ratio: Mass vs rho_c should be smooth
-- Along constant rho_c: Mass vs r_ratio should be smooth
+- Along constant r_ratio: Mass vs rho_c should be monotonically increasing
+- Along constant rho_c: Mass vs r_ratio should be monotonically decreasing (lower r_ratio = higher mass)
 
 Points that violate monotonicity in BOTH directions get flagged for removal.
 """
@@ -32,58 +32,55 @@ class MonotonicityFilter:
         """
         Walk along constant r_ratio lines and flag monotonicity violations.
         
-        For each r_ratio, Mass should smoothly vary with rho_c (typically increase then decrease).
+        For each r_ratio, Mass should generally INCREASE with rho_c.
         """
         eos_df = df[df['eos'] == eos].copy()
         flagged = set()
         
         print(f"Checking r_ratio sequences for {eos}...")
         
-        for r_ratio in sorted(eos_df['r_ratio'].unique(), reverse=True):
+        for r_ratio in sorted(eos_df['r_ratio'].unique()):
             r_ratio_group = eos_df[eos_df['r_ratio'] == r_ratio].copy()
             
             if len(r_ratio_group) < 3:
                 continue  # Need at least 3 points to check monotonicity
             
-            # Sort by rho_c
-            r_ratio_group = r_ratio_group.sort_values('rho_c').reset_index(drop=True)
+            # Sort by rho_c (ascending)
+            r_ratio_group = r_ratio_group.sort_values('rho_c').reset_index()
             
             rho_vals = r_ratio_group['rho_c'].values
             M_vals = r_ratio_group['M'].values
-            original_indices = r_ratio_group.index.values  # Original DataFrame indices
+            original_indices = r_ratio_group['index'].values  # Original DataFrame indices
             
-            # Look for obvious outliers using simpler method
+            # Check for monotonicity violations and outliers
             if len(M_vals) >= 3:
-                # Calculate local deviations
+                # Check for local outliers using neighbor interpolation
                 for i in range(1, len(M_vals) - 1):
                     current_M = M_vals[i]
                     prev_M = M_vals[i-1]
                     next_M = M_vals[i+1]
                     
-                    # Expected value based on neighbors
-                    expected_M = (prev_M + next_M) / 2
-                    deviation = abs(current_M - expected_M)
-                    
-                    # Calculate local scale
-                    local_scale = abs(next_M - prev_M) / 2 if abs(next_M - prev_M) > 0 else 0.1
-                    
-                    # Flag points that deviate too much from smooth interpolation
-                    if deviation > local_scale * self.tolerance_factor:
-                        flagged.add(original_indices[i])
-                        print(f"  r_ratio={r_ratio:.3f}: Flagged rho_c={rho_vals[i]:.2e}, M={M_vals[i]:.3f} (local deviation)")
+                    # Expected value based on linear interpolation between neighbors
+                    rho_prev, rho_curr, rho_next = rho_vals[i-1], rho_vals[i], rho_vals[i+1]
+                    if rho_next > rho_prev:  # Avoid division by zero
+                        expected_M = prev_M + (next_M - prev_M) * (rho_curr - rho_prev) / (rho_next - rho_prev)
+                        deviation = abs(current_M - expected_M)
+                        
+                        # Calculate local scale for tolerance
+                        local_scale = abs(next_M - prev_M) if abs(next_M - prev_M) > 0 else 0.01
+                        
+                        # Flag points that deviate too much from smooth trend
+                        if deviation > local_scale * self.tolerance_factor:
+                            flagged.add(original_indices[i])
+                            print(f"  r_ratio={r_ratio:.3f}: Flagged rho_c={rho_vals[i]:.2e}, M={M_vals[i]:.3f} (outlier)")
                 
-                # Also check for mass reversals (mass should generally increase then decrease)
-                mass_diffs = np.diff(M_vals)
-                
-                # Find where mass changes direction unexpectedly
-                for i in range(1, len(mass_diffs)):
-                    if abs(mass_diffs[i]) > abs(mass_diffs[i-1]) * 3:  # Sudden large change
-                        flagged.add(original_indices[i])
-                        print(f"  r_ratio={r_ratio:.3f}: Flagged rho_c={rho_vals[i]:.2e}, M={M_vals[i]:.3f} (sudden change)")
-
-                # Find where mass decreases with increasing rotation
+                # Check for major monotonicity violations (mass decreasing significantly with increasing rho_c)
+                # Allow for small fluctuations but flag major decreases
                 for i in range(1, len(M_vals)):
-                    if M_vals[i] < M_vals[i-1]:
+                    mass_change = M_vals[i] - M_vals[i-1]
+                    rho_change = rho_vals[i] - rho_vals[i-1]
+                    
+                    if mass_change < 0 and abs(mass_change) > 0.05:  # Significant mass decrease
                         flagged.add(original_indices[i])
                         print(f"  r_ratio={r_ratio:.3f}: Flagged rho_c={rho_vals[i]:.2e}, M={M_vals[i]:.3f} (mass decrease)")
         
@@ -93,58 +90,69 @@ class MonotonicityFilter:
         """
         Walk along constant rho_c lines and flag monotonicity violations.
         
-        For each rho_c, Mass typically increases with rotation (decreasing r_ratio) up to a limit.
+        For each rho_c, Mass should generally DECREASE with increasing r_ratio (lower r_ratio = more rotation = higher mass).
         """
         eos_df = df[df['eos'] == eos].copy()
         flagged = set()
         
         print(f"Checking rho_c sequences for {eos}...")
         
-        # Group by rho_c (with tolerance for numerical precision)
+        # Group by rho_c (with small tolerance for numerical precision)
         rho_values = sorted(eos_df['rho_c'].unique())
         
         for rho_c in rho_values:
-            rho_group = eos_df[eos_df['rho_c'] == rho_c].copy()
+            # Allow small tolerance in rho_c matching
+            tolerance = rho_c * 1e-10
+            rho_group = eos_df[abs(eos_df['rho_c'] - rho_c) <= tolerance].copy()
             
             if len(rho_group) < 3:
                 continue
             
-            # Sort by r_ratio (decreasing = increasing rotation)
-            rho_group = rho_group.sort_values('r_ratio', ascending=False).reset_index(drop=True)
+            # Sort by r_ratio (ascending = decreasing rotation = decreasing expected mass)
+            rho_group = rho_group.sort_values('r_ratio', ascending=True).reset_index()
             
             r_ratio_vals = rho_group['r_ratio'].values
             M_vals = rho_group['M'].values
             Omega_vals = rho_group['Omega'].values
-            original_indices = rho_group.index.values  # Original DataFrame indices
+            original_indices = rho_group['index'].values  # Original DataFrame indices
             
-            # Check for local outliers along the sequence
+            # Check for violations along the sequence
             if len(M_vals) >= 3:
+                # Check for local outliers using neighbor interpolation
                 for i in range(1, len(M_vals) - 1):
                     current_M = M_vals[i]
                     prev_M = M_vals[i-1]
                     next_M = M_vals[i+1]
                     
-                    # Expected value based on neighbors
-                    expected_M = (prev_M + next_M) / 2
-                    deviation = abs(current_M - expected_M)
+                    # Expected value based on linear interpolation
+                    r_prev, r_curr, r_next = r_ratio_vals[i-1], r_ratio_vals[i], r_ratio_vals[i+1]
+                    if r_next > r_prev:  # Avoid division by zero
+                        expected_M = prev_M + (next_M - prev_M) * (r_curr - r_prev) / (r_next - r_prev)
+                        deviation = abs(current_M - expected_M)
+                        
+                        # Calculate local scale
+                        local_scale = abs(next_M - prev_M) if abs(next_M - prev_M) > 0 else 0.01
+                        
+                        # Flag points that deviate too much
+                        if deviation > local_scale * self.tolerance_factor:
+                            flagged.add(original_indices[i])
+                            print(f"  rho_c={rho_c:.2e}: Flagged r_ratio={r_ratio_vals[i]:.3f}, M={M_vals[i]:.3f} (outlier)")
+                
+                # Check for monotonicity violations (mass increasing with increasing r_ratio)
+                # Mass should generally decrease as r_ratio increases (less rotation)
+                for i in range(1, len(M_vals)):
+                    mass_change = M_vals[i] - M_vals[i-1]
+                    r_ratio_change = r_ratio_vals[i] - r_ratio_vals[i-1]
                     
-                    # Calculate local scale
-                    local_scale = abs(next_M - prev_M) / 2 if abs(next_M - prev_M) > 0 else 0.1
-                    
-                    # Flag points that deviate too much
-                    if deviation > local_scale * self.tolerance_factor:
+                    if mass_change > 0.05 and r_ratio_change > 0:  # Significant mass increase with increasing r_ratio
                         flagged.add(original_indices[i])
-                        print(f"  rho_c={rho_c:.2e}: Flagged r_ratio={r_ratio_vals[i]:.3f}, M={M_vals[i]:.3f} (mass anomaly)")
-                    
-                    # Also check for physically impossible Omega values
-                    if Omega_vals[i] < 0 or (r_ratio_vals[i] < 0.99 and Omega_vals[i] == 0):
+                        print(f"  rho_c={rho_c:.2e}: Flagged r_ratio={r_ratio_vals[i]:.3f}, M={M_vals[i]:.3f} (wrong trend)")
+                
+                # Check for physically impossible Omega values
+                for i in range(len(Omega_vals)):
+                    if Omega_vals[i] < 0 or (r_ratio_vals[i] < 0.99 and abs(Omega_vals[i]) < 1e-10):
                         flagged.add(original_indices[i])
                         print(f"  rho_c={rho_c:.2e}: Flagged r_ratio={r_ratio_vals[i]:.3f} (bad Omega={Omega_vals[i]:.3f})")
-                    
-                    # Find where mass decreases with increasing rotation
-                    if i > 0 and M_vals[i] < M_vals[i-1]:
-                        flagged.add(original_indices[i])
-                        print(f"  rho_c={rho_c:.2e}: Flagged r_ratio={r_ratio_vals[i]:.3f}, M={M_vals[i]:.3f} (mass decrease)")
         
         return flagged
     
@@ -154,7 +162,9 @@ class MonotonicityFilter:
         
         Points must be flagged in BOTH r_ratio AND rho_c directions to be removed.
         """
-        current_df = df.copy()
+        # Add a persistent ID column to track points across iterations
+        current_df = df.copy().reset_index(drop=True)
+        current_df['_original_id'] = range(len(current_df))
         
         print(f"Starting iterative monotonicity filtering ({n_iterations} iterations)")
         print(f"Initial data: {len(current_df)} points")
@@ -163,7 +173,7 @@ class MonotonicityFilter:
             print(f"\n{'='*60}")
             print(f"ITERATION {iteration + 1}/{n_iterations}")
             print(f"{'='*60}")
-            print(f"Current DataFrame has {len(current_df)} points with index range {current_df.index.min()}-{current_df.index.max()}")
+            print(f"Current DataFrame has {len(current_df)} points")
             
             all_flagged_r_ratio = set()
             all_flagged_rho_c = set()
@@ -180,15 +190,15 @@ class MonotonicityFilter:
                 all_flagged_r_ratio.update(r_ratio_flagged)
                 all_flagged_rho_c.update(rho_c_flagged)
                 
-                print(f"  Flagged in r_ratio direction: {len(r_ratio_flagged)} -> {sorted(list(r_ratio_flagged))[:5]}{'...' if len(r_ratio_flagged) > 5 else ''}")
-                print(f"  Flagged in rho_c direction: {len(rho_c_flagged)} -> {sorted(list(rho_c_flagged))[:5]}{'...' if len(rho_c_flagged) > 5 else ''}")
+                print(f"  Flagged in r_ratio direction: {len(r_ratio_flagged)}")
+                print(f"  Flagged in rho_c direction: {len(rho_c_flagged)}")
             
             # Remove points flagged in BOTH directions
             doubly_flagged = all_flagged_r_ratio.intersection(all_flagged_rho_c)
             
             print(f"\nFlagged in r_ratio direction: {len(all_flagged_r_ratio)} total")
             print(f"Flagged in rho_c direction: {len(all_flagged_rho_c)} total")
-            print(f"Flagged in BOTH directions: {len(doubly_flagged)} -> {sorted(list(doubly_flagged))[:10]}{'...' if len(doubly_flagged) > 10 else ''}")
+            print(f"Flagged in BOTH directions: {len(doubly_flagged)}")
             
             if len(doubly_flagged) == 0:
                 print(f"\nNo points flagged in both directions. Stopping at iteration {iteration + 1}")
@@ -196,20 +206,10 @@ class MonotonicityFilter:
             
             print(f"\nRemoving {len(doubly_flagged)} points flagged in both directions")
             
-            # Verify the indices exist before dropping
-            valid_indices = [idx for idx in doubly_flagged if idx in current_df.index]
-            invalid_indices = doubly_flagged - set(valid_indices)
+            # Remove the flagged points using the current DataFrame indices
+            current_df = current_df.drop(doubly_flagged).reset_index(drop=True)
             
-            if invalid_indices:
-                print(f"WARNING: {len(invalid_indices)} flagged indices not found in current DataFrame: {sorted(list(invalid_indices))[:5]}")
-            
-            # Remove the flagged points
-            current_df = current_df.drop(valid_indices)
-            
-            print(f"Successfully removed {len(valid_indices)} points")
             print(f"Points remaining: {len(current_df)}")
-            
-            # DO NOT reset index - keep original indices for next iteration
         
         print(f"\n{'='*60}")
         print("FILTERING COMPLETE")
@@ -219,8 +219,8 @@ class MonotonicityFilter:
         print(f"Removed: {len(df) - len(current_df)}")
         print(f"Retention rate: {len(current_df)/len(df)*100:.1f}%")
         
-        # Reset index only at the very end for clean output
-        return current_df.reset_index(drop=True)
+        # Remove the helper column and return
+        return current_df.drop('_original_id', axis=1)
 
 def plot_filtering_progress(df_original: pd.DataFrame, 
                           df_filtered: pd.DataFrame,

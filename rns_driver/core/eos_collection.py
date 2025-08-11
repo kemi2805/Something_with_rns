@@ -81,6 +81,7 @@ class EOSCollection:
             self.add_star(star)
             
             # Handle step size
+            use_adaptive_step = False
             if use_adaptive_step and previous_M is not None:
                 # Adaptive step size based on mass gradient
                 gradient = abs(star.M - previous_M) / current_stepsize
